@@ -7,11 +7,13 @@
 
 #include <avr/io.h>
 
-enum IncDec_States { Start, Init, WaitRise, WaitFall, Inc, Dec, Reset } IncDec_State;
+enum IncDec_States { Start, Init, WaitRise, WaitFall, Inc, Dec} IncDec_State;//, Reset } IncDec_State;
 
-unsigned char tmpA = 0x00;
-unsigned char tmpB = 0x00;
-unsigned char button = 0x00;
+//unsigned char tmpA = 0x00;
+unsigned char tmpC = 0x00;
+unsigned char buttonA = 0x00;
+unsigned char buttonB = 0x00;
+unsigned char buttonC = 0x00;
 
 void TickFct_IncDec()
 {
@@ -22,47 +24,80 @@ void TickFct_IncDec()
 		break;
 		
 		case Init:
-		tmpA = PINA;
-		button = ~tmpA & 0x0F;
+		//tmpA = PINA;
+		
 		IncDec_State = WaitRise;
 		break;
 		
 		case WaitRise:
 		
-		if (GetBit) && (!(tmpA & 0x02)))
+		buttonA = ~PINA & 0x01;
+		buttonB = ~PINA & 0x02;
+		buttonC = ~PINA & 0x04;
+		if(buttonA)
+		//if ((buttonA) && (!(buttonB)))
 		{
 			IncDec_State = Inc;
+			break;
 		}
-		else if ((!(tmpA & 0x01)) && (tmpA & 0x02))
+		else if(buttonB)
+		//else if ((!(buttonA)) && (buttonB))
 		{
 			IncDec_State = Dec;
+			break;
 		}
-		else if ((tmpA & 0x03) == 0x03)
-		{
-			IncDec_State = Reset;
-		}
-		else if ((tmpA & 0x03) != 0x03)
-		{
-			IncDec_State = WaitRise;
-		}
+// 		else if (buttonC)
+// 		{
+// 			IncDec_State = Reset;
+// 			break;
+// 		}
 		else
 		{
 			IncDec_State = WaitRise;
+			break;
 		}
 		break;
 		
 		case WaitFall:
-		if (tmpA == PINA)
+		buttonA = ~PINA & 0x01;
+		buttonB = ~PINA & 0x02;
+		buttonC = ~PINA & 0x04;
+		if (buttonA)
 		{
 			IncDec_State = WaitFall;
+			break;
 		}
-		else if (tmpA != PINA)
+		else if (!buttonA)
 		{
 			IncDec_State = WaitRise;
+			break;
+		}
+		else if (buttonB)
+		{
+			IncDec_State = WaitFall;
+			break;
+		}
+		else if (!buttonB)
+		{
+			IncDec_State = WaitRise;
+			break;
+		}
+		//else if (buttonA && buttonB)
+		else if (buttonC)
+		{
+			IncDec_State = WaitFall;
+			break;
+		}
+		else if (!buttonC)
+		//else if ((!buttonA) && !(buttonB))
+		{
+			IncDec_State = WaitRise;
+			break;
 		}
 		else
 		{
 			IncDec_State = WaitRise;
+			break;
 		}
 		break;
 
@@ -74,12 +109,12 @@ void TickFct_IncDec()
 		IncDec_State = WaitFall;
 		break;
 		
-		case Reset:
-		IncDec_State = WaitFall;
-		break;
+// 		case Reset:
+// 		IncDec_State = WaitFall;
+// 		break;
 		
 		default:
-		IncDec_State = WaitFall;
+		IncDec_State = WaitRise;
 		break;
 		
 	}
@@ -87,6 +122,7 @@ void TickFct_IncDec()
 	switch (IncDec_State)
 	{
 		case Start:
+		
 		break;
 		
 		case Init:
@@ -94,6 +130,20 @@ void TickFct_IncDec()
 		break;
 		
 		case WaitRise:
+		if(buttonA)
+		{
+			if ((tmpC + 1) <= 9)
+			{
+				++tmpC;
+			}
+		}
+		else if (buttonB)
+		{
+			if ((tmpC - 1) >= 0)
+			{
+				--tmpC;
+			}
+		}
 		PORTC = tmpC;
 		break;
 
@@ -102,21 +152,22 @@ void TickFct_IncDec()
 		break;
 		
 		case Inc:
-		if (tmpC + 1 <= 9)
-		{
-			++tmpC;
-		}
+// 		if ((tmpC + 1) <= 9)
+// 		{
+// 			++tmpC;
+// 		}
 		break;
 		
 		case Dec:
-		if (tmpC - 1 >= 0)
+		if ((tmpC - 1) >= 0)
 		{
 			--tmpC;
 		}
 		break;
 		
-		case Reset:
-		tmpC = 0;
+// 		case Reset:
+// 		tmpC = 0;
+// 		break;
 		
 		default:
 		break;
@@ -128,10 +179,19 @@ int main(void)
 {
 	DDRA = 0x00; PORTA = 0xFF; // Configure port A's 8 pins as inputs
 	DDRC = 0xFF; PORTC = 0x00; // Configure port C's 8 pins as outputs
-	
+	//unsigned char led = 0x00;
 	IncDec_State = Start;
 	while (1)
 	{
+// 		buttonA = ~PINA & 0x04;
+// 		if (buttonA) { // True if button is pressed
+// 			led = (led & 0xFC) | 0x01; // Sets B to bbbbbb01
+// 			// (clear rightmost 2 bits, then set to 01)
+// 		}
+// 		else {
+// 			led = (led & 0xFC) | 0x02;
+// 		}
+// 		PORTC = led;
  		TickFct_IncDec();
 	}
 }
