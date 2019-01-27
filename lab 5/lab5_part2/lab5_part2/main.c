@@ -7,7 +7,7 @@
 
 #include <avr/io.h>
 
-enum IncDec_States { Start, Init, WaitRise, WaitFall, Inc, Dec} IncDec_State;//, Reset } IncDec_State;
+enum IncDec_States { Start, Init, WaitRise, WaitFall, Inc, Dec, Reset } IncDec_State;
 
 //unsigned char tmpA = 0x00;
 unsigned char tmpC = 0x00;
@@ -37,20 +37,20 @@ void TickFct_IncDec()
 		if(buttonA)
 		//if ((buttonA) && (!(buttonB)))
 		{
-			IncDec_State = Inc;
+			IncDec_State = Dec;
 			break;
 		}
 		else if(buttonB)
 		//else if ((!(buttonA)) && (buttonB))
 		{
-			IncDec_State = Dec;
+			IncDec_State = Reset;
 			break;
 		}
-// 		else if (buttonC)
-// 		{
-// 			IncDec_State = Reset;
-// 			break;
-// 		}
+		else if (buttonC)
+		{
+			IncDec_State = Inc;
+			break;
+		}
 		else
 		{
 			IncDec_State = WaitRise;
@@ -59,47 +59,35 @@ void TickFct_IncDec()
 		break;
 		
 		case WaitFall:
-		buttonA = ~PINA & 0x01;
-		buttonB = ~PINA & 0x02;
-		buttonC = ~PINA & 0x04;
-		if (buttonA)
-		{
-			IncDec_State = WaitFall;
+			buttonA = ~PINA & 0x01;
+			buttonB = ~PINA & 0x02;
+			buttonC = ~PINA & 0x04;
+			if (buttonA)
+			{
+				IncDec_State = WaitFall;
+				break;
+			}
+			else if (buttonB)
+			{
+				IncDec_State = WaitRise;
+				break;
+			}
+			else if (!buttonB)
+			{
+				IncDec_State = WaitRise;
+				break;
+			}
+			else if (buttonC)
+			{
+				IncDec_State = WaitFall;
+				break;
+			}
+			else
+			{
+				IncDec_State = WaitRise;
+				break;
+			}
 			break;
-		}
-		else if (!buttonA)
-		{
-			IncDec_State = WaitRise;
-			break;
-		}
-		else if (buttonB)
-		{
-			IncDec_State = WaitFall;
-			break;
-		}
-		else if (!buttonB)
-		{
-			IncDec_State = WaitRise;
-			break;
-		}
-		//else if (buttonA && buttonB)
-		else if (buttonC)
-		{
-			IncDec_State = WaitFall;
-			break;
-		}
-		else if (!buttonC)
-		//else if ((!buttonA) && !(buttonB))
-		{
-			IncDec_State = WaitRise;
-			break;
-		}
-		else
-		{
-			IncDec_State = WaitRise;
-			break;
-		}
-		break;
 
 		case Inc:
 		IncDec_State = WaitFall;
@@ -109,9 +97,9 @@ void TickFct_IncDec()
 		IncDec_State = WaitFall;
 		break;
 		
-// 		case Reset:
-// 		IncDec_State = WaitFall;
-// 		break;
+		case Reset:
+		IncDec_State = WaitFall;
+		break;
 		
 		default:
 		IncDec_State = WaitRise;
@@ -122,52 +110,36 @@ void TickFct_IncDec()
 	switch (IncDec_State)
 	{
 		case Start:
-		
-		break;
+			break;
 		
 		case Init:
-		tmpC = 7;
-		break;
+			tmpC = 7;
+			break;
 		
 		case WaitRise:
-		if(buttonA)
-		{
-			if ((tmpC + 1) <= 9)
-			{
-				++tmpC;
-			}
-		}
-		else if (buttonB)
-		{
-			if ((tmpC - 1) >= 0)
-			{
-				--tmpC;
-			}
-		}
-		PORTC = tmpC;
-		break;
+			PORTC = tmpC;
+			break;
 
 		case WaitFall:
-		PORTC = tmpC;
 		break;
 		
 		case Inc:
-// 		if ((tmpC + 1) <= 9)
-// 		{
-// 			++tmpC;
-// 		}
+		if ((tmpC + 1) <= 9)
+		{
+			++tmpC;
+		}
 		break;
 		
 		case Dec:
 		if ((tmpC - 1) >= 0)
 		{
-			--tmpC;
+			tmpC = tmpC - 1;
 		}
 		break;
 		
-// 		case Reset:
-// 		tmpC = 0;
-// 		break;
+		case Reset:
+		tmpC = 0;
+		break;
 		
 		default:
 		break;
