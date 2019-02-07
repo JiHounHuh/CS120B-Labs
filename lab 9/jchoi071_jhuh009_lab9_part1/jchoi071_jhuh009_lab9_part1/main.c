@@ -47,7 +47,7 @@ void PWM_off() {
 	TCCR0A = 0x00;
 	TCCR0B = 0x00;
 }
-enum Sound_States {Start, Init, WaitRise, WaitFall} Sound_State;
+enum Sound_States {Start, Init, WaitRise, WaitFall, SetA, SetB, SetC} Sound_State;
 unsigned char tmpC = 0x00;
 unsigned char buttonA = 0x00;
 unsigned char buttonB = 0x00;
@@ -108,6 +108,10 @@ void TickFct_Sound() {
 			Sound_State = WaitFall;
 			break;
 		
+		case SetC:
+			Sound_State = WaitFall;
+			break;
+		
 		
 	}
 }
@@ -119,7 +123,7 @@ int main(void)
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	PWM_on();
-	set_PWM(261.63);
+	//set_PWM(261.63);
     /* Replace with your application code */
     while (1) 
     {
