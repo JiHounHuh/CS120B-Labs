@@ -52,6 +52,7 @@ unsigned char tmpC = 0x00;
 unsigned char buttonA = 0x00;
 unsigned char buttonB = 0x00;
 unsigned char buttonC = 0x00;
+
 void TickFct_Sound() {
 	switch (Sound_State) {
 		case Start:
@@ -66,6 +67,48 @@ void TickFct_Sound() {
 			buttonA = ~PINA & 0x01;
 			buttonB = ~PINA & 0x02;
 			buttonC = ~PINA & 0x04;
+		
+			if(buttonA) {
+				Sound_State = SetA;
+				break;
+			}
+			else if(buttonB) {
+				Sound_State = SetB;
+				break;
+			}
+			else if(buttonC) {
+				Sound_State = SetC;
+				break;
+			}
+			else {
+				Sound_State = WaitRise;
+				break;
+			}
+			break;
+			
+		case WaitFall:
+			buttonA = ~PINA & 0x01;
+			buttonB = ~PINA & 0x02;
+			buttonC = ~PINA & 0x03;
+			if(buttonA || buttonB || buttonC) {
+				Sound_State = WaitFall;
+				break;
+			}
+			else {
+				Sound_State = WaitRise;
+				break;
+			}
+			break;
+			
+		case SetA:
+			Sound_State = WaitFall;
+			break;
+		
+		case SetB:
+			Sound_State = WaitFall;
+			break;
+		
+		
 	}
 }
 
