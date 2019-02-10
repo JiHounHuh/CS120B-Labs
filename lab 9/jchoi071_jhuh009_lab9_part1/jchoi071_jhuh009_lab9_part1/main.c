@@ -1,4 +1,4 @@
-/*
+ /*
  * jchoi071_jhuh009_lab9_part1.c
  *
  * Created: 2/7/2019 2:40:01 PM
@@ -54,7 +54,7 @@ unsigned char buttonB = 0x00;
 unsigned char buttonC = 0x00;
 
 void TickFct_Sound() {
-	switch (Sound_State) {
+	switch(Sound_State) {
 		case Start:
 			Sound_State = Init;
 			break;
@@ -111,8 +111,36 @@ void TickFct_Sound() {
 		case SetC:
 			Sound_State = WaitFall;
 			break;
-		
-		
+			
+		default:
+			Sound_State = WaitRise;
+			break;
+	}
+	switch(Sound_State) {
+		case Start:
+			break;
+		//enum Sound_States {Start, Init, WaitRise, WaitFall, SetA, SetB, SetC} Sound_State;
+		case Init:
+			break;
+		case WaitRise:
+			break;
+			set_PWM(0);
+			//(PORTB & 0x04) = tmpC;
+			break;
+		case WaitFall:
+			break;
+		case SetA:
+			set_PWM(261.63);
+			break;
+		case SetB:
+			set_PWM(293.66);
+			break;
+		case SetC:
+			set_PWM(329.63);
+			break;
+		default:
+			Sound_State = WaitRise;
+			break;
 	}
 }
 
@@ -121,9 +149,9 @@ void TickFct_Sound() {
 int main(void)
 {
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRB = 0xFF; PORTB = 0x00;
+	DDRB = 0x08; PORTB = 0x00;
 	PWM_on();
-	//set_PWM(261.63);
+	set_PWM(1);
     /* Replace with your application code */
     while (1) 
     {
