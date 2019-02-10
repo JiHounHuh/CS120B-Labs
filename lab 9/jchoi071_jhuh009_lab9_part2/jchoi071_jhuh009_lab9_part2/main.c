@@ -47,7 +47,8 @@ void PWM_off() {
 	TCCR0A = 0x00;
 	TCCR0B = 0x00;
 }
-enum Sound_States {Start, Init, WaitRise, WaitFall, SetA, SetB, SetC} Sound_State;
+enum Sound_States {Start, Init, WaitRise, WaitFall, SetA, Inc, Dec, Speaker} Sound_State;
+unsigned char tmpA = 0x01;
 unsigned char tmpC = 0x00;
 unsigned char buttonA = 0x00;
 unsigned char buttonB = 0x00;
@@ -61,24 +62,26 @@ void TickFct_Sound() {
 		
 		case Init:
 			Sound_State = WaitRise;
+			
 			break;
 		
 		case WaitRise:
 			buttonA = ~PINA & 0x01;
 			buttonB = ~PINA & 0x02;
 			buttonC = ~PINA & 0x04;
-		
 			if(buttonA && !buttonB && !buttonC) {
 				Sound_State = SetA;
-				break;
+				break;	
 			}
-			else if(buttonB && !buttonA && !buttonC) {
-				Sound_State = SetB;
-				break;
-			}
-			else if(buttonC && !buttonA && !buttonB) {
-				Sound_State = SetC;
-				break;
+			else if(tmpA == 0x01) {
+				if(buttonB && !buttonA && !buttonC) {
+					Sound_State = Inc;
+					break;
+				}
+				else if(buttonC && !buttonA && !buttonB) {
+					Sound_State = Dec;
+					break;
+				}
 			}
 			else {
 				Sound_State = WaitRise;
@@ -95,27 +98,32 @@ void TickFct_Sound() {
     			break;
 			}
 			else if(buttonB && !buttonA && !buttonC) {
-    			Sound_State = WaitFall;
-    			break;
+				Sound_State = WaitFall;
+				break;
 			}
 			else if(buttonC && !buttonA && !buttonB) {
-    			Sound_State = WaitFall;
-    			break;
+				Sound_State = WaitFall;
+				break;
 			}
 			else {
-				Sound_State = WaitRise;
+				Sound_State = Speaker;
+				break;
 			}
+			break;
+			
+		case Speaker:
+			Sound_State = WaitRise;
 			break;
 			
 		case SetA:
 			Sound_State = WaitFall;
 			break;
 		
-		case SetB:
+		case Inc:
 			Sound_State = WaitFall;
 			break;
 		
-		case SetC:
+		case Dec:
 			Sound_State = WaitFall;
 			break;
 			
@@ -123,27 +131,91 @@ void TickFct_Sound() {
 			Sound_State = WaitRise;
 			break;
 	}
+	
 	switch(Sound_State) {
 		case Start:
 			break;
 		//enum Sound_States {Start, Init, WaitRise, WaitFall, SetA, SetB, SetC} Sound_State;
 		case Init:
-			break;
-		case WaitRise:
+			tmpC = 0;
+			tmpA = 0;
 			set_PWM(0);
+			break;
+			
+		case WaitRise:
+			//set_PWM(0);
 			//(PORTB & 0x04) = tmpC;
 			break;
+			
 		case WaitFall:
 			break;
+			
 		case SetA:
-			set_PWM(261.63);
+			if(tmpA == 0x00) {
+				tmpA = 1;
+				set_PWM(1);
+			}
+			else if(tmpA == 0x01) {
+				tmpA = 0;
+				set_PWM(0);
+			}
 			break;
-		case SetB:
-			set_PWM(293.66);
+			
+		case Inc:
+			if ((tmpC + 1) < 9)
+			{
+				++tmpC;
+			}
 			break;
-		case SetC:
-			set_PWM(329.63);
+			
+		case Dec:
+			if ((tmpC - 1) >= 0)
+			{
+				--tmpC;
+			}
 			break;
+		
+		case Speaker:
+			if(tmpA == 0) {
+				break;
+			}
+			else {
+				if(tmpC == 0) {
+					set_PWM(261.63);
+					break;
+				}
+				else if(tmpC == 1) {
+					set_PWM(293.66);
+					break;
+				}
+				else if(tmpC == 2) {
+					set_PWM(329.63);
+					break;
+				}
+				else if(tmpC == 3) {
+					set_PWM(349.23);
+					break;
+				}
+				else if(tmpC == 4) {
+					set_PWM(392.00);
+					break;
+				}
+				else if(tmpC == 5) {
+					set_PWM(440.00);
+					break;
+				}
+				else if(tmpC == 6) {
+					set_PWM(493.88);
+					break;
+				}
+				else if(tmpC == 7) {
+					set_PWM(523.25);
+					break;
+				}
+				break;
+			}
+			break;
+			
 		default:
 			Sound_State = WaitRise;
 			break;
