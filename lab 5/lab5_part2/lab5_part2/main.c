@@ -155,15 +155,6 @@ int main(void)
 	IncDec_State = Start;
 	while (1)
 	{
-// 		buttonA = ~PINA & 0x04;
-// 		if (buttonA) { // True if button is pressed
-// 			led = (led & 0xFC) | 0x01; // Sets B to bbbbbb01
-// 			// (clear rightmost 2 bits, then set to 01)
-// 		}
-// 		else {
-// 			led = (led & 0xFC) | 0x02;
-// 		}
-// 		PORTC = led;
  		TickFct_IncDec();
 	}
 }

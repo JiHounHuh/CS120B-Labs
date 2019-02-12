@@ -34,7 +34,7 @@ int main(void)
 		
 		unsigned short my_short = ADC;
 		unsigned char my_char = (char)my_short; // my_char = 0xCD
-		my_char = (char)(my_short);
+		//my_char = (char)(my_short);
 		PORTB = my_short;
 		my_char = (char)(my_short >> 8); // my_char = 0xBC
 		PORTD = my_char;
