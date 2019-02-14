@@ -75,16 +75,29 @@ void TickFct_BlinkLed() {
 
 int main(void)
 {
+	unsigned long BL_elapsedTime = 0;
+	unsigned long TL_elapsedTime = 0;
+	const unsigned long timerPeriod = 100;
 	DDRB = 0xFF;
 	PORTB = 0x00;
-	TimerSet(1000);
+	TimerSet(100);
 	TimerOn();
 	while (1)
 	{
-		Tick();
-		TickFct_BlinkLed();
+		if (BL_elapsedTime >= 1000) { // 1000 ms period
+			TickFct_BlinkLed(); // Execute one tick of the BlinkLed synchSM
+			BL_elapsedTime = 0;
+		}
+		if(TL_elapsedTime >= 300){
+			Tick();
+			TL_elapsedTime = 0;
+		}
+		
+		//TickFct_BlinkLed();
 		while(!TimerFlag);
 		TimerFlag = 0;
+		BL_elapsedTime += timerPeriod;
+		TL_elapsedTime += timerPeriod;
 	}
 }
 
