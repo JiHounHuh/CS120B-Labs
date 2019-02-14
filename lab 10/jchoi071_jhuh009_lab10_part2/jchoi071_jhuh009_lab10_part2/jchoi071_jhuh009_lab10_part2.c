@@ -27,16 +27,24 @@ void Tick() {
 	}
 	switch(state) {
 		case Start: 
-			break;
-				
+			break;	
 		case S0:
-			tmpB = 0x01; 
+			tmpB =  0x01; 
+			if(tmpC == 1) {
+				tmpB += 0x08;
+			}
 			PORTB = tmpB; break;
 		case S1: 
-			tmpB = 0x02; 
+			tmpB = (0x02); 
+			if(tmpC == 1) {
+				tmpB += 0x08;
+			}
 			PORTB = tmpB; break;
 		case S2: 
-			tmpB = 0x04; 
+			tmpB = 0x04;
+			if(tmpC == 1) {
+				tmpB += 0x08;
+			} 
 			PORTB = tmpB; break;
 		default: break;
 	}
@@ -47,9 +55,9 @@ void TickFct_BlinkLed() {
 		case Begin:
 			BlinkState = S3;
 			break;
-		
 		case S3: 
 			break;
+			
 		default:
 			BlinkState = Begin;
 			break;
@@ -60,13 +68,16 @@ void TickFct_BlinkLed() {
 		case S3:
 			if(tmpC == 0x01) {
 				tmpB += 0x08;
+				PORTB = tmpB;
 				tmpC = 0x00;
+				break;
 			}
-			else {
+			else if(tmpC == 0x00) {
 				tmpC = 0x01;
+				break;
 			}
-			PORTB = tmpB;
 			break;
+			
 		default:
 			break;
 	}
@@ -82,13 +93,18 @@ int main(void)
 	PORTB = 0x00;
 	TimerSet(100);
 	TimerOn();
+	BlinkState = Begin;
+	state = Start;
 	while (1)
 	{
-		if (BL_elapsedTime >= 1000) { // 1000 ms period
+		if(BL_elapsedTime >= 1000) {
 			TickFct_BlinkLed(); // Execute one tick of the BlinkLed synchSM
 			BL_elapsedTime = 0;
 		}
+		
+		//TimerSet(100);
 		if(TL_elapsedTime >= 300){
+			
 			Tick();
 			TL_elapsedTime = 0;
 		}
