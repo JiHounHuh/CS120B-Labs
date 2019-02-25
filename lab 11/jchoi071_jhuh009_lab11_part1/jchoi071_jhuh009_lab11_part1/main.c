@@ -11,20 +11,6 @@
 #include "timer.h"
 #include "stdio.h"
 
-//--------Find GCD function --------------------------------------------------
-unsigned long int findGCD(unsigned long int a, unsigned long int b)
-{
-	unsigned long int c;
-	while(1){
-		c = a%b;
-		if(c==0){return b;}
-		a = b;
-		b = c;
-	}
-	return 0;
-}
-//--------End find GCD function ----------------------------------------------
-
 
 //--------Task scheduler data structure---------------------------------------
 // Struct for Tasks represent a running process in our simple real-time operating system.
@@ -39,103 +25,108 @@ typedef struct _task {
 
 //--------End Task scheduler data structure-----------------------------------
 
-//--------Shared Variables----------------------------------------------------
-unsigned char SM2_output = 0x00;
-unsigned char SM3_output = 0x00;
-unsigned char pause = 0;
+unsigned char GetKeypadKey() {
 
-//--------End Shared Variables------------------------------------------------
+	PORTC = 0xEF; // Enable col 4 with 0, disable others with 1’s
+	asm("nop"); // add a delay to allow PORTC to stabilize before checking
+	if (GetBit(PINC,0)==0) { return('1'); }
+	if (GetBit(PINC,1)==0) { return('4'); }
+	if (GetBit(PINC,2)==0) { return('7'); }
+	if (GetBit(PINC,3)==0) { return('*'); }
 
+	// Check keys in col 2
+	PORTC = 0xDF; // Enable col 5 with 0, disable others with 1’s
+	asm("nop"); // add a delay to allow PORTC to stabilize before checking
+	if (GetBit(PINC,0)==0) { return('2'); }
+	if (GetBit(PINC,1)==0) { return('5'); }
+	if (GetBit(PINC,2)==0) { return('8'); }
+	if (GetBit(PINC,3)==0) { return('0'); }
+
+	// Check keys in col 3
+	PORTC = 0xBF; // Enable col 6 with 0, disable others with 1’s
+	asm("nop"); // add a delay to allow PORTC to stabilize before checking
+	if (GetBit(PINC,0)==0) { return('3'); }
+	if (GetBit(PINC,1)==0) { return('6'); }
+	if (GetBit(PINC,2)==0) { return('9'); }
+	if (GetBit(PINC,3)==0) { return('#'); }
+
+	// Check keys in col 4
+	PORTC = 0x7F; // Enable col 7 with 0, disable others with 1’s
+	asm("nop"); // add a delay to allow PORTC to stabilize before checking
+	if (GetBit(PINC,0)==0) { return('A'); }
+	if (GetBit(PINC,1)==0) { return('B'); }
+	if (GetBit(PINC,2)==0) { return('C'); }
+	if (GetBit(PINC,3)==0) { return('D'); }
+
+	return('\0'); // default value
+
+}
 //--------User defined FSMs---------------------------------------------------
 //Enumeration of states.
-enum SM1_States { SM1_wait, SM1_press, SM1_release };
+enum SM1_States { SM1_Start, SM1_wait, SM1_keypadPress};
 
 // Monitors button connected to PA0. 
 // When button is pressed, shared variable "pause" is toggled.
 int SMTick1(int state) {
 
 	// Local Variables
-	unsigned char press = ~PINC;
-
+	unsigned char keypadPress = GetKeypadKey();
+	
 	//State machine transitions
 	switch (state) {
-	case SM1_wait: 	
-		if (press == 0x01) {	// Input 1
-			state = SM1_press;
-		}
-		if (press == 0x02) {	// Input 2
-			state = SM1_press;
-		}
-// 		if (press == 0x03) {	// Input 3
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x04) {	// Input 4
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x05) {	// Input 5
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x06) {	// Input 6
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x07) {	// Input 7
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x08) {	// Input 8
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x09) {	// Input 9
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0A) {	// Input A
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0B) {	// Input B
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0C) {	// Input C
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0D) {	// Input D
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0E) {	// Input #
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x0F) {	// Input 0
-// 			state = SM1_press;
-// 		}
-// 		if (press == 0x10) {	// Input *
-// 			state = SM1_press;
-// 		}
+	case SM1_Start:
+		state = SM1_wait;
+		break;
+		
+	case SM1_wait:
+		if(keypadPress != '\0'){
+			state = SM1_keypadPress;
+		} 	
 		break;
 
-	case SM1_press:	
-		state = SM1_release;
+	case SM1_keypadPress:	
+		if(keypadPress == '\0'){
+			state = SM1_wait;
+		}else{
+			state = SM1_keypadPress;
+		}
 		break;
-
-	case SM1_release:	
-		if (press == 0x00) {	// Wait for button release
-	state = SM1_wait;
-	}
-break;
-
-	default:		state = SM1_wait; // default: Initial state
-				break;
+		
+	default:		
+		state = SM1_wait; // default: Initial state
+		break;
 	}
 
 	//State machine actions
 	switch(state) {
-	case SM1_wait:	
-			PORTB = press;
-		
-		break;
+		case SM1_wait:	
+			keypadPress = 0x1F;
 
-	case SM1_press:	break;
+		case SM1_keypadPress:	
+			switch (keypadPress) {
+				case '\0': PORTB = 0x1F; break; // All 5 LEDs on
+				case '0': PORTB = 0x00; break;
+				case '1': PORTB = 0x01; break; // hex equivalent
+				case '2': PORTB = 0x02; break;
+				case '3': PORTB = 0x03; break;
+				case '4': PORTB = 0x04; break;
+				case '5': PORTB = 0x05; break;
+				case '6': PORTB = 0x06; break;
+				case '7': PORTB = 0x07; break;
+				case '8': PORTB = 0x08; break;
+				case '9': PORTB = 0x09; break;
+				case 'A': PORTB = 0x0A; break;
+				case 'B': PORTB = 0x0B; break;
+				case 'C': PORTB = 0x0C; break;
+				case 'D': PORTB = 0x0D; break;
+				case '*': PORTB = 0x0E; break;
+				case '#': PORTB = 0x0F; break;
+				default: PORTB = 0x1F; break; // Should never occur. Middle LED off.
+			}
+			break;
 
-	case SM1_release:	break;
-
-	default:		break;
+		default:		
+	break;
 	}
 
 	return state;
@@ -146,63 +137,32 @@ int main()
 {
 // Set Data Direction Registers
 // Buttons PORTA[0-7], set AVR PORTA to pull down logic
-DDRC = 0x00; PORTA = 0xFF;
+DDRC = 0xF0; PORTA = 0x0F;
 DDRB = 0xFF; PORTB = 0x00;
-// . . . etc
-
-// Period for the tasks
-unsigned long int SMTick1_calc = 50;
-unsigned long int SMTick2_calc = 500;
-unsigned long int SMTick3_calc = 1000;
-unsigned long int SMTick4_calc = 10;
-
-//Calculating GCD
-unsigned long int tmpGCD = 1;
-tmpGCD = findGCD(SMTick1_calc, SMTick2_calc);
-tmpGCD = findGCD(tmpGCD, SMTick3_calc);
-tmpGCD = findGCD(tmpGCD, SMTick4_calc);
-
-//Greatest common divisor for all tasks or smallest time unit for tasks.
-unsigned long int GCD = tmpGCD;
-
-//Recalculate GCD periods for scheduler
-unsigned long int SMTick1_period = SMTick1_calc/GCD;
-unsigned long int SMTick2_period = SMTick2_calc/GCD;
-unsigned long int SMTick3_period = SMTick3_calc/GCD;
-unsigned long int SMTick4_period = SMTick4_calc/GCD;
 
 //Declare an array of tasks 
-static task task1, task2, task3, task4;
-task *tasks[] = { &task1, &task2, &task3, &task4 };
-const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
+static task task1;
+task *tasks = &task1;
+
 
 // Task 1
 task1.state = -1;//Task initial state.
-task1.period = SMTick1_period;//Task Period.
-task1.elapsedTime = SMTick1_period;//Task current elapsed time.
+task1.period = 50;//Task Period.
 task1.TickFct = &SMTick1;//Function pointer for the tick.
 
 // Set the timer and turn it on
-TimerSet(GCD);
+TimerSet(50);
 TimerOn();
 
 unsigned short i; // Scheduler for-loop iterator
 while(1) {
 	// Scheduler code
-	for ( i = 0; i < numTasks; i++ ) {
-		// Task is ready to tick
-		if ( tasks[i]->elapsedTime == tasks[i]->period ) {
-			// Setting next state for task
-			tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
-			// Reset the elapsed time for next tick.
-			tasks[i]->elapsedTime = 0;
-		}
-		tasks[i]->elapsedTime += 1;
+	for ( i = 0; i < 1; i++ ) {
+			tasks->state = tasks->TickFct(tasks->state);
 	}
 	while(!TimerFlag);
 	TimerFlag = 0;
 }
 
 // Error: Program should not exit!
-return 0;
 }
